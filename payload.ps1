@@ -1,20 +1,19 @@
-# Apito longo de 1 segundo para você SABER que a versão nova baixou
+# Apito para confirmar a versão Nova!
 [System.Console]::Beep(800, 1000)
 
 Start-Sleep -Seconds 3
 
-# Usando um comando mais moderno e agressivo (Get-PnpDevice)
 while ($true) {
-    # Ele procura especificamente nos teclados e exige que o Status esteja 'OK'
-    $usb = Get-PnpDevice -Class Keyboard -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match '1C4F' -and $_.Status -eq 'OK' }
+    # -PresentOnly ignora fantasmas e checa apenas a conexão FÍSICA real
+    $usb = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match 'VID_1C4F&PID_0084' }
 
     if (-not $usb) {
-        # Sumiu ou o status mudou pra Erro? Confirma rápido.
+        # Prova Real
         Start-Sleep -Seconds 1
-        $confirm = Get-PnpDevice -Class Keyboard -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match '1C4F' -and $_.Status -eq 'OK' }
+        $confirm = Get-PnpDevice -PresentOnly -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match 'VID_1C4F&PID_0084' }
         
         if (-not $confirm) {
-            # GATILHO ACIONADO! Abre a Calculadora
+            # GATILHO ACIONADO!
             Start-Process calc.exe
             break
         }
